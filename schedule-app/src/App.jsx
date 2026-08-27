@@ -135,8 +135,22 @@ function extractJsonArray(text) {
     return JSON.parse(cleaned);
   } catch (e) {
     const match = cleaned.match(/\[[\s\S]*\]/);
-    if (match) return JSON.parse(match[0]);
-    throw e;
+    const candidate = match ? match[0] : cleaned;
+    try {
+      return JSON.parse(candidate);
+    } catch (e2) {
+      // Response likely got cut off mid-object (token limit). Salvage
+      // whatever complete entries we can instead of failing outright.
+      const lastComplete = candidate.lastIndexOf("},");
+      if (lastComplete > -1) {
+        try {
+          return JSON.parse(candidate.slice(0, lastComplete + 1) + "]");
+        } catch (e3) {
+          // fall through
+        }
+      }
+      throw new Error("incomplete-response");
+    }
   }
 }
 
@@ -307,7 +321,10 @@ export default function App() {
       showToast(`Added ${cleaned.length} class${cleaned.length === 1 ? "" : "es"}.`);
     } catch (e) {
       console.error(e);
-      setError(e.message && e.message !== "Failed to fetch" ? e.message : "Couldn't read that schedule. Check your connection and try again.");
+      const friendly = e.message === "incomplete-response"
+        ? "The schedule was too long for one pass — try a photo with fewer classes, or split it into two uploads."
+        : (e.message && e.message !== "Failed to fetch" ? e.message : "Couldn't read that schedule. Check your connection and try again.");
+      setError(friendly);
     } finally {
       setLoading(false);
     }
