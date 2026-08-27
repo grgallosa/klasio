@@ -642,8 +642,8 @@ export default function App() {
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        @media (max-width: 480px) {
-          .day-row-time { display: none; }
+        @media (max-width: 360px) {
+          .day-row-time { font-size: 10.5px !important; }
         }
       `}</style>
 
